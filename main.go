@@ -8,17 +8,23 @@ import (
 	"github.com/gorilla/mux"
 
     "io"
+    "encoding/json"
 ) // "os"
 
 // réponse à la requête GET 
 func homeLink(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Welcome home!")
+	fmt.Fprintf(w, "Welcome home Team!")
 }
 
 // lance le serveur local
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", homeLink)
+	router.HandleFunc("/", homeLink)  // ici quand url de la requête fini par :8080/ lance la fonction homelink
+    router.HandleFunc("/event", createEvent).Methods("POST")
+    router.HandleFunc("/events", getAllEvents).Methods("GET")
+    router.HandleFunc("/events/{id}", getOneEvent).Methods("GET")
+    router.HandleFunc("/events/{id}", updateEvent).Methods("PATCH")
+    router.HandleFunc("/events/{id}", deleteEvent).Methods("DELETE")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
@@ -39,6 +45,12 @@ var events = allEvents{
         ID:          "1",
 		Title:       "Introduction to Golang",
 		Description: "Come join us for a chance to learn how golang works and get to eventually try it out",
+    },
+        {
+            ID:          "2",
+            Title:       "Développpement to Golang 2",
+            Description: "Come join us for a chance to learn how golang works and get to eventually try it out 2",
+                },
         // id :"rec1VNeSJWYdZgoTo",
         // createdTime :"2018-05-31T00:16:16.000Z",
         // "fields":{"Surf Break":["Reef Break"],
@@ -51,12 +63,13 @@ var events = allEvents{
         // "Peak Surf Season Ends":"2024-08-31",
         // "Difficulty Level":4,
         // "Address":"Pipeline, Oahu, Hawaii"}
-    },
-}
+    }
+
 
 // créée un event en récupérant les datas 
 func createEvent(w http.ResponseWriter, r *http.Request) {
-	var newEvent event
+	fmt.Fprintf(w, "On entre dans createEvent")
+    var newEvent event
 
     // en go, := est disponible uniquement dans une fonction
     // c'est une version raccourcie pour déclarer & initialiser une variable
@@ -68,8 +81,59 @@ func createEvent(w http.ResponseWriter, r *http.Request) {
     // Unmarshal permet de transformer de la data en byte en son format d'origine
     // CAD ici pour décoder de la data json
 	json.Unmarshal(reqBody, &newEvent)
-	events = append(events, newEvent)
-	w.WriteHeader(http.StatusCreated)
 
+    events = append(events, newEvent) // ajoute le nouvel évènement à la liste d'évènements
+	w.WriteHeader(http.StatusCreated) // indique que la création de l'événement a été réussie en définissant le code de statut de la réponse à "201 Created"
+
+    // Encode l'événement nouvellement créé en JSON et le renvoie dans le corps de la réponse HTTP (w)
 	json.NewEncoder(w).Encode(newEvent)
+}
+
+// get an event based on the number at the end of the url
+func getOneEvent(w http.ResponseWriter, r *http.Request) {
+	eventID := mux.Vars(r)["id"] // récupère et stock l'id (numéro) dans l'url de la requête après /events/
+
+	for _, singleEvent := range events {    // _, 
+		if singleEvent.ID == eventID {
+			json.NewEncoder(w).Encode(singleEvent)
+		}
+	}
+}
+
+// get all the events
+func getAllEvents(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(events)
+}
+
+// modify elements of an event
+func updateEvent(w http.ResponseWriter, r *http.Request) {
+	eventID := mux.Vars(r)["id"]
+	var updatedEvent event
+
+	reqBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		fmt.Fprintf(w, "Kindly enter data with the event title and description only in order to update")
+	}
+	json.Unmarshal(reqBody, &updatedEvent)
+
+	for i, singleEvent := range events {
+		if singleEvent.ID == eventID {
+			singleEvent.Title = updatedEvent.Title
+			singleEvent.Description = updatedEvent.Description
+			events = append(events[:i], singleEvent)
+			json.NewEncoder(w).Encode(singleEvent)
+		}
+	}
+}
+
+// delete an event
+func deleteEvent(w http.ResponseWriter, r *http.Request) {
+	eventID := mux.Vars(r)["id"]
+
+	for i, singleEvent := range events {
+		if singleEvent.ID == eventID {
+			events = append(events[:i], events[i+1:]...)
+			fmt.Fprintf(w, "The event with ID %v has been deleted successfully", eventID)
+		}
+	}
 }
