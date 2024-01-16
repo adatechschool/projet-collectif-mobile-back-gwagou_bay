@@ -1,3 +1,5 @@
-module gwagoubay_back
+module api-rest-gwagoubay-back
 
 go 1.21.6
+
+require github.com/gorilla/mux v1.8.1 // indirect
