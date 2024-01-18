@@ -20,11 +20,11 @@ func homeLink(w http.ResponseWriter, r *http.Request) {
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", homeLink)  // ici quand url de la requête fini par :8080/ lance la fonction homelink
-    router.HandleFunc("/event", createEvent).Methods("POST")
-    router.HandleFunc("/events", getAllEvents).Methods("GET")
-    router.HandleFunc("/events/{id}", getOneEvent).Methods("GET")
-    router.HandleFunc("/events/{id}", updateEvent).Methods("PATCH")
-    router.HandleFunc("/events/{id}", deleteEvent).Methods("DELETE")
+    router.HandleFunc("/spots", createEvent).Methods("POST")
+    router.HandleFunc("/spots", getAllEvents).Methods("GET")
+    router.HandleFunc("/spots/{id}", getOneEvent).Methods("GET")
+    router.HandleFunc("/spots/{id}", updateEvent).Methods("PATCH")
+    router.HandleFunc("/spots/{id}", deleteEvent).Methods("DELETE")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
